@@ -1,7 +1,11 @@
 #include <filesystem>
+#include <string>
+#include <fstream>
 
 #include "StdAfx.h"
 #include "DsimModel.h"
+
+using namespace std;
 
 INT DsimModel::isdigital (CHAR *pinname)
 {
@@ -31,34 +35,25 @@ VOID DsimModel::setup (IINSTANCE *instance, IDSIMCKT *dsimckt)
 
 	memset(memory, 0, sizeof(memory));
 
-	char *fname = inst->getstrval("file");
-	if (fname != NULL)
+	fname = inst->getstrval("file");
+	base = inst->getinitval("base");
+	if (!fname.empty())
 	{
-		if (std::filesystem::exists(fname))
+		if (filesystem::exists(fname))
 		{
-			auto f = fopen(fname, "r");
-			if (f != NULL)
+			if (filesystem::path(fname).extension() == ".hex")
 			{
-				inst->log("Loading file '%s'.", fname);
-
-				// Loading data
-
-				fclose(f);
+				load_hex();
 			}
 			else
 			{
-				inst->error("File '%s' can't opened!", fname);
+				load_bin();
 			}
 		}
 		else
 		{
-			inst->warning("File '%s' not exists.", fname);
+			inst->warning("File '%s' not exists.", fname.c_str());
 		}
-	}
-
-	for (auto i = 0; i < sizeof(memory); i++)
-	{
-		memory[i] = i;
 	}
 }
 
@@ -93,7 +88,7 @@ UINT8 DsimModel::get_addr(VOID)
 	for (auto &pin : pin_A)
 	{
 		result >>= 1;
-		result |= (ishigh(pin->istate())) ? (1 << _countof(pin_A) - 1) : 0;
+		result |= (ishigh(pin->istate())) ? 1 << _countof(pin_A) >> 1 : 0;
 	}
 
 	return result;
@@ -105,5 +100,84 @@ VOID DsimModel::set_data(ABSTIME time, UINT8 data)
 	{
 		pin->setstate(time, 1, (data & 1) ? SLO : SHI); // Negative output
 		data >>= 1;
+	}
+}
+
+VOID DsimModel::load_bin(VOID)
+{
+	ifstream f(fname, ios::binary);
+	if (f.is_open())
+	{
+		inst->log("Loading BIN file '%s'.", fname.c_str());
+
+		// Get file size
+		f.seekg(0, ios::end);
+		auto fsize = f.tellg();
+
+		// Load data
+		if (fsize > base)
+		{
+			f.seekg(base, ios::beg);
+			f.read(reinterpret_cast<char*>(memory), sizeof(memory));
+		}
+
+		inst->log("%d bytes loaded.", f.gcount());
+
+		f.close();
+	}
+	else
+	{
+		inst->error("File '%s' can't opened!", fname.c_str());
+	}
+}
+
+VOID DsimModel::load_hex(VOID)
+{
+	ifstream f(fname, ios::in);
+	if (f.is_open())
+	{
+		inst->log("Loading HEX file '%s'.", fname.c_str());
+
+		int addr_h = 0;
+		int load_cnt = 0;
+		// Reading files
+		while (!f.eof())
+		{
+			string line;
+			getline(f, line);
+
+			// Parsing headers
+			int len, addr_l, type;
+			if (true
+				&& sscanf_s(line.c_str(), ":02000004%4x", &addr_h) != 1
+				&& sscanf_s(line.c_str(), ":%2x%4x%2x", &len, &addr_l, &type) == 3
+				&& type == 0
+				)
+			{
+				// Parse data
+				for (auto i = 0; i < len; i++)
+				{
+					int d;
+					if (sscanf_s(line.substr(9 + i * 2).c_str(), "%2x", &d) == 1)
+					{
+						int real_addr = (addr_h << 16) + addr_l + i - base;
+
+						if (0 <= real_addr && real_addr < sizeof(memory))
+						{
+							memory[real_addr] = d;
+							load_cnt++;
+						}
+					}
+				}
+			}
+		}
+
+		inst->log("%d bytes loaded.", load_cnt);
+
+		f.close();
+	}
+	else
+	{
+		inst->error("File '%s' can't opened!", fname.c_str());
 	}
 }

@@ -1,8 +1,10 @@
 #pragma once
 
-#include <stdlib.h>
+#include <string>
 #include "StdAfx.h"
 #include "sdk/vsm.hpp"
+
+using namespace std;
 
 #define InfoLog(__s__) inst->log(__s__);
 
@@ -22,6 +24,10 @@ private:
 	IDSIMPIN * pin_A[5], * pin_D[8], * pin_V;
 	IDEBUGPOPUP *myPopup;
 	UINT8 memory[32];
+	string fname;
+	INT base;
 	UINT8 get_addr(VOID);
 	VOID set_data(ABSTIME time, UINT8 data);
+	VOID load_bin(VOID);
+	VOID load_hex(VOID);
 };
