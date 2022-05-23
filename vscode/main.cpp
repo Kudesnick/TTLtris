@@ -4,14 +4,18 @@
 #include "stdafx.h"
 #include "vsm.hpp"
 #include "k155re3.h"
+#include "k155ru5.h"
 
 #define VSMModel_key 0x00000000
 
 extern "C" IDSIMMODEL __declspec (dllexport) *createdsimmodel(CHAR *device, ILICENCESERVER *ils) {
-		if (ils->authorize(VSMModel_key))
-			return new k155re3;
-		else
-			return NULL;
+	if (ils->authorize(VSMModel_key))
+	{
+		if (strcmp(device, "k155re3") == 0) return new k155re3;
+		if (strcmp(device, "k155ru5") == 0) return new k155ru5;
+	}
+
+	return NULL;
 }
 
 extern "C" VOID __declspec (dllexport) deletedsimmodel(IDSIMMODEL *model) {

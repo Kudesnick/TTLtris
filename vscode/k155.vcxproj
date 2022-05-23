@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="k155re3.h" />
+    <ClInclude Include="k155ru5.h" />
     <ClInclude Include="vsm.hpp" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
@@ -165,6 +166,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="k155re3.cpp" />
+    <ClCompile Include="k155ru5.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
