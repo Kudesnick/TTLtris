@@ -62,6 +62,8 @@ VOID k155ru5::setup (IINSTANCE *instance, IDSIMCKT *dsimckt)
 
 	if (inst->getstrval("file") != NULL)
 		inst->loadmemory(inst->getstrval("file"), memory, _countof(memory), inst->getinitval("base"), inst->getinitval("shift"));
+
+	debug = inst->getboolval("debug", false);
 }
 
 VOID k155ru5::runctrl (RUNMODES mode)
@@ -88,7 +90,15 @@ VOID k155ru5::simulate(ABSTIME time, DSIMMODES mode)
 		)
 	{
 		if (islow(pin_WE->istate()))
-			memory[get_addr()] = memory[get_addr()] & 0xFE | ishigh(pin_DI->istate()) ? 1 : 0;
+		{
+			UINT8 addr = get_addr();
+			UINT8 val = (memory[addr] & 0xFE) | (ishigh(pin_DI->istate()) ? 1 : 0);
+			memory[addr] = val;
+			if (debug)
+			{
+				inst->log("Write 0x%02X to 0x%04X", val, addr);
+			}
+		}
 		else
 			result = (memory[get_addr()] & 1) ? SHI : SLO;
 	}

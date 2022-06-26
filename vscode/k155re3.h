@@ -27,7 +27,6 @@ private:
 	IINSTANCE *inst;
 	IDSIMCKT *ckt;
 	IDSIMPIN * pin_A[5], * pin_D[8], * pin_V;
-	IDEBUGPOPUP *myPopup;
 	UINT8 memory[32];
 	UINT8 get_addr(VOID);
 	VOID set_data(ABSTIME time, UINT8 data);
