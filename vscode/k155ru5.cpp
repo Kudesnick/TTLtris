@@ -96,7 +96,7 @@ VOID k155ru5::simulate(ABSTIME time, DSIMMODES mode)
 			memory[addr] = val;
 			if (debug)
 			{
-				inst->log("Write 0x%02X to 0x%04X", val, addr);
+				inst->log("0x%04X = 0x%02X", addr, val);
 			}
 		}
 		else
