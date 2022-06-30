@@ -1,3 +1,2 @@
-1. 4-digit summator - 781 elements and 2-digits - 91 elements. May replaced all summators to 2-digits
-2. May be used BCD-to-BIN decoder and one RAM chip
-3. 4 8-digits shift registers - overengineering
+1. May be used BCD-to-BIN decoder and one RAM chip
+2. 4 8-digits shift registers - overengineering
