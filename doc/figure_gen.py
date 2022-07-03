@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from os import lseek
+from intelhex import IntelHex
+
 # +-> X
 # |
 # v
@@ -49,4 +52,28 @@ for i in [I, J, L, O, S, T, Z]:
                 if i[f + y*4][x] == '#':
                     coord.append((x, y))
 
-print(coord)
+# print(coord)
+
+'''
+MSB             LSB
+0000 0000 0000 0000
+                 \--x0
+               \----x1
+            \-------x2
+          \---------x3
+       \------------y0
+     \--------------y1
+  \-----------------y2
+\-------------------y3
+'''
+
+offset = 32
+
+hex = IntelHex()
+for i in range(int(len(coord) / 4)):
+     s = coord[i*4:i*4+4]
+     hex.puts(i,          bytes([s[0][0] + (s[1][0] << 2) + (s[2][0] << 4) + (s[3][0] << 6)]))
+     hex.puts(i + offset, bytes([s[0][1] + (s[1][1] << 2) + (s[2][1] << 4) + (s[3][1] << 6)]))
+hex.write_hex_file('figure.hex', byte_count = 8)
+
+print('Writed {} bytes.'.format(hex.maxaddr() + 1))
