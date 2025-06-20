@@ -8,8 +8,8 @@ from intelhex import IntelHex
 # v
 # Y
 
-I = ['0000', '0#00', '0000', '0#00',
-     '####', '0#00', '####', '0#00',
+I = ['####', '0#00', '####', '0#00',
+     '0000', '0#00', '0000', '0#00',
      '0000', '0#00', '0000', '0#00',
      '0000', '0#00', '0000', '0#00']
 
@@ -51,6 +51,7 @@ for i in [I, J, L, O, S, T, Z]:
         for x in range(4):
             for y in range(4):
                 if i[f + y*4][x] == '#':
+                    # Инвертируем, т.к. выход ПЗУ = инверсный
                     x_coord.append(x ^ 3)
                     y_coord.append(y ^ 3)
 
@@ -77,6 +78,6 @@ for i in range(int(len(x_coord) / 4)):
      y = y_coord[i*4:i*4+4]
      hex.puts(i,           bytes([x[0] + (x[1] << 2) + (x[2] << 4) + (x[3] << 6)]))
      hex.puts(i + offset, bytes([y[0] + (y[1] << 2) + (y[2] << 4) + (y[3] << 6)]))
-hex.write_hex_file('figure.hex', byte_count = 8)
+hex.write_hex_file('figure.hex', byte_count = 16)
 
 print('Writed {} bytes.'.format(hex.maxaddr() + 1))
