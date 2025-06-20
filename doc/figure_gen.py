@@ -8,10 +8,10 @@ from intelhex import IntelHex
 # v
 # Y
 
-I = ['0000', '#000', '0000', '#000',
-     '####', '#000', '####', '#000',
-     '0000', '#000', '0000', '#000',
-     '0000', '#000', '0000', '#000']
+I = ['0000', '0#00', '0000', '0#00',
+     '####', '0#00', '####', '0#00',
+     '0000', '0#00', '0000', '0#00',
+     '0000', '0#00', '0000', '0#00']
 
 J = ['#000', '0#00', '###0', '##00',
      '###0', '0#00', '00#0', '#000',
@@ -43,14 +43,16 @@ Z = ['##00', '0#00', '##00', '0#00',
      '0000', '#000', '0000', '#000',
      '0000', '0000', '0000', '0000']
 
-coord = []
+x_coord = []
+y_coord = []
 
 for i in [I, J, L, O, S, T, Z]:
     for f in range(4):
         for x in range(4):
             for y in range(4):
                 if i[f + y*4][x] == '#':
-                    coord.append((x, y))
+                    x_coord.append(x ^ 3)
+                    y_coord.append(y ^ 3)
 
 # print(coord)
 
@@ -70,10 +72,11 @@ MSB             LSB
 offset = 32
 
 hex = IntelHex()
-for i in range(int(len(coord) / 4)):
-     s = coord[i*4:i*4+4]
-     hex.puts(i,          bytes([s[0][0] + (s[1][0] << 2) + (s[2][0] << 4) + (s[3][0] << 6)]))
-     hex.puts(i + offset, bytes([s[0][1] + (s[1][1] << 2) + (s[2][1] << 4) + (s[3][1] << 6)]))
+for i in range(int(len(x_coord) / 4)):
+     x = x_coord[i*4:i*4+4]
+     y = y_coord[i*4:i*4+4]
+     hex.puts(i,           bytes([x[0] + (x[1] << 2) + (x[2] << 4) + (x[3] << 6)]))
+     hex.puts(i + offset, bytes([y[0] + (y[1] << 2) + (y[2] << 4) + (y[3] << 6)]))
 hex.write_hex_file('figure.hex', byte_count = 8)
 
 print('Writed {} bytes.'.format(hex.maxaddr() + 1))
