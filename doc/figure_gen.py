@@ -78,6 +78,75 @@ for i in range(int(len(x_coord) / 4)):
      y = y_coord[i*4:i*4+4]
      hex.puts(i,           bytes([x[0] + (x[1] << 2) + (x[2] << 4) + (x[3] << 6)]))
      hex.puts(i + offset, bytes([y[0] + (y[1] << 2) + (y[2] << 4) + (y[3] << 6)]))
-hex.write_hex_file('figure.hex', byte_count = 16)
+hex.write_hex_file('../proteus/figure.hex', byte_count = 16)
 
-print('Writed {} bytes.'.format(hex.maxaddr() + 1))
+print('Writed {} bytes to figure.hex.'.format(hex.maxaddr() + 1))
+
+# Y
+# ^
+# Y
+# +-> X
+
+rect1 = [
+     '# # 0 0 0 0 0 0 # #',
+     '# 0 # 0 # 0 # 0 # 0',
+     '0 # 0 # 0 # 0 # 0 #',
+     '# 0 # 0 # 0 # 0 # 0',
+     '0 # 0 # 0 # 0 # 0 #',
+     '# 0 # 0 # 0 # 0 # 0',
+     '0 # 0 # 0 # 0 # 0 #',
+     '# 0 # 0 # 0 # 0 # 0',
+     '0 # 0 # 0 # 0 # 0 #',
+     '# # 0 # 0 # 0 # 0 #',
+     '# # 0 # 0 # 0 # 0 #',
+     '0 # 0 # 0 # 0 # 0 0',
+     '0 # 0 # 0 # 0 # 0 0',
+     '# 0 # 0 # 0 # 0 # 0',
+     '0 # 0 # 0 # 0 # 0 #',
+     '# # # # # # # # # #',
+     '# 0 # 0 # 0 # 0 # 0',
+     '0 # 0 # 0 # 0 # 0 #',
+     '# # # # # # # # # #',
+     '0 # 0 # 0 # 0 # 0 #',
+     ]
+
+rect2 = [
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 0 0 0 0 0 0 0',
+     '0 0 0 # 0 0 0 0 0 0',
+     '0 0 0 # 0 0 0 0 0 0',
+     '0 0 0 # 0 0 0 0 0 0',
+     '# # # # # # # 0 0 0',
+     ]
+
+rect = rect1
+
+hexsz = 512
+strsz = 16
+rect = ''.join([''.join(i.split()).ljust(strsz, '0') for i in rect]).rjust(hexsz, '0')
+dots = bytearray([])
+for y in range(int(hexsz / strsz)):
+     for x in range(strsz):
+         ch = rect[hexsz - ((y + 1)  * strsz) + x]
+         d = 0 if ch == '0' else 0xFF
+         dots.append(d)
+
+hex = IntelHex()
+hex.frombytes(dots)
+hex.write_hex_file('../proteus/k155ru5.hex', byte_count = strsz)
+
+print('Writed {} bytes to k155ru5.hex.'.format(hex.maxaddr() + 1))
