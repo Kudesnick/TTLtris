@@ -80,14 +80,16 @@ for i in range(int(len(x_coord) / 4)):
      hex.puts(i + offset, bytes([y[0] + (y[1] << 2) + (y[2] << 4) + (y[3] << 6)]))
 hex.write_hex_file('../proteus/figure.hex', byte_count = 16)
 
-print('Writed {} bytes to figure.hex.'.format(hex.maxaddr() + 1))
+print(f'Writed {hex.maxaddr() + 1} bytes to figure.hex.')
 
 # Y
 # ^
 # Y
 # +-> X
 
-rect1 = [
+rect = {}
+
+rect['full'] = [
      '# # 0 0 0 0 0 0 # #',
      '# 0 # 0 # 0 # 0 # 0',
      '0 # 0 # 0 # 0 # 0 #',
@@ -110,7 +112,7 @@ rect1 = [
      '0 # 0 # 0 # 0 # 0 #',
      ]
 
-rect2 = [
+rect['empty'] = [
      '0 0 0 0 0 0 0 0 0 0',
      '0 0 0 0 0 0 0 0 0 0',
      '0 0 0 0 0 0 0 0 0 0',
@@ -133,20 +135,20 @@ rect2 = [
      '# # # # # # # 0 0 0',
      ]
 
-rect = rect1
+for k, v in rect.items():
 
-hexsz = 512
-strsz = 16
-rect = ''.join([''.join(i.split()).ljust(strsz, '0') for i in rect]).rjust(hexsz, '0')
-dots = bytearray([])
-for y in range(int(hexsz / strsz)):
-     for x in range(strsz):
-         ch = rect[hexsz - ((y + 1)  * strsz) + x]
-         d = 0 if ch == '0' else 0xFF
-         dots.append(d)
+     hexsz = 512
+     strsz = 16
+     rectangle = ''.join([''.join(i.split()).ljust(strsz, '0') for i in v]).rjust(hexsz, '0')
+     dots = bytearray([])
+     for y in range(int(hexsz / strsz)):
+          for x in range(strsz):
+              ch = rectangle[hexsz - ((y + 1)  * strsz) + x]
+              d = 0 if ch == '0' else 0xFF
+              dots.append(d)
 
-hex = IntelHex()
-hex.frombytes(dots)
-hex.write_hex_file('../proteus/k155ru5.hex', byte_count = strsz)
+     hex = IntelHex()
+     hex.frombytes(dots)
+     hex.write_hex_file(f'../proteus/k155ru5_{k}.hex', byte_count = strsz)
 
-print('Writed {} bytes to k155ru5.hex.'.format(hex.maxaddr() + 1))
+     print(f'Writed {hex.maxaddr() + 1} bytes to k155ru5_{k}.hex.')
