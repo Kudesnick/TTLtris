@@ -46,7 +46,7 @@ Z = ['##00', '0#00', '##00', '0#00',
 x_coord = []
 y_coord = []
 
-for i in [I, J, L, O, S, T, Z]:
+for i in [I, J, L, O, S, T, Z, I]:
     for f in range(4):
         for x in range(4):
             for y in range(4):
