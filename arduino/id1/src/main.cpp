@@ -3,15 +3,15 @@
 #include <TimerOne.h> 
 
 // Конфигурация декодеров строк
-#define ROW_DECODER_BIT0 0
-#define ROW_DECODER_BIT1 1
-#define ROW_DECODER_BIT2 2
-#define ROW_DECODER_EN1  3
-#define ROW_DECODER_EN2  4
-#define ROW_DECODER_EN3  5
+#define ROW_DECODER_BIT0 (A0)
+#define ROW_DECODER_BIT1 (A1)
+#define ROW_DECODER_BIT2 (A2)
+#define ROW_DECODER_EN1  (A3)
+#define ROW_DECODER_EN2  (A4)
+#define ROW_DECODER_EN3  (A5)
 
 // Конфигурация столбцов (10 пинов)
-const byte colPins[10] = {6, 7, 8, 9, 10, 11, 12, 13, A0, A1};
+const byte colPins[10] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
 // Буфер дисплея (10x20)
 uint16_t displayBuffer[20] = {0};
@@ -74,15 +74,22 @@ void setup() {
   }
 
   // Настройка таймера для динамической индикации
-  Timer1.initialize(2000); // 500Hz (2000 мкс)
+  Timer1.initialize(1000); // 1000Hz (1000 мкс)
   Timer1.attachInterrupt(updateDisplay);
+
+  Serial.begin(9600);
+  Serial.println("init complete");
 }
 
 void updateDisplayContent()
-{}
+{
+  static uint8_t fill = 0;
+  memset(displayBuffer, (fill++ & 0x0F) ? 0xFF : 0, sizeof(displayBuffer));
+  fill++;
+}
 
 void loop() {
   // Обновляем содержимое буфера
   updateDisplayContent();
-  delay(50);
+  delay(1000);
 }
