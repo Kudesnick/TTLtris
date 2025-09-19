@@ -2,47 +2,44 @@
 #include <fastIO.h>
 #include <TimerOne.h> 
 
-// Конфигурация декодеров строк
-#define ROW_DECODER_BIT0 (A0)
-#define ROW_DECODER_BIT1 (A1)
-#define ROW_DECODER_BIT2 (A2)
-#define ROW_DECODER_EN1  (A3)
-#define ROW_DECODER_EN2  (A4)
-#define ROW_DECODER_EN3  (A5)
+// Конфигурация строк
+const uint16_t dcPins[5] = {A0, A1, A2, A3, A4};
 
-// Конфигурация столбцов (10 пинов)
-const byte colPins[10] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+enum pins {
+  Start,
+  DO,
+  Clk,
+  Strn,
+  cnt
+};
 
-// Буфер дисплея (10x20)
-uint16_t displayBuffer[20] = {0};
+const uint16_t ctlPins[pins::cnt] = {2, 3, 4, 5};
+
+// Буфер дисплея (10x21)
+uint16_t displayBuffer[21] = {0};
 const uint16_t displayBufferCount = sizeof(displayBuffer) / sizeof(displayBuffer[0]);
 
 // Установка активной строки (0-19)
 void setRow(byte row, uint16_t mask) {
-  fastDigitalWrite(ROW_DECODER_EN1, HIGH);
-  fastDigitalWrite(ROW_DECODER_EN2, HIGH);
-  fastDigitalWrite(ROW_DECODER_EN3, HIGH);
-  fastDigitalWrite(ROW_DECODER_BIT0, row & 0x01);
-  fastDigitalWrite(ROW_DECODER_BIT1, (row >> 1) & 0x01);
-  fastDigitalWrite(ROW_DECODER_BIT2, (row >> 2) & 0x01);
   // Актуализация столбцов
-  for (auto pin : colPins)
+  for (int i = 0; i < 10; i++, mask >>= 1)
   {
-    fastDigitalWrite(pin, mask & 1);
-    mask >>= 1;
+    fastDigitalWrite(ctlPins[pins::Clk], HIGH);
+    fastDigitalWrite(ctlPins[pins::DO], mask & 1);
+    fastDigitalWrite(ctlPins[pins::Clk], LOW);
   }
-  // Первый декодер (строки 0-7)
-  if (row < 8) {
-    fastDigitalWrite(ROW_DECODER_EN1, LOW);
-  } 
-  // Второй декодер (строки 8-15)
-  else if (row < 16) {
-    fastDigitalWrite(ROW_DECODER_EN2, LOW);
+  fastDigitalWrite(ctlPins[pins::Clk], HIGH);
+  fastDigitalWrite(ctlPins[pins::Start], HIGH);
+  fastDigitalWrite(ctlPins[pins::Strn], HIGH);
+  // Декодер строки
+  for (auto pin : dcPins)
+  {
+    fastDigitalWrite(pin, row & 1);
+    row >>= 1;
   }
-  // Третий декодер (строки 15-22)
-  else {
-    fastDigitalWrite(ROW_DECODER_EN3, LOW);
-  }
+  fastDigitalWrite(ctlPins[pins::Strn], LOW);
+  fastDigitalWrite(ctlPins[pins::Start], LOW);
+  fastDigitalWrite(ctlPins[pins::Strn], HIGH);
 }
 
 // Прерывание для обновления дисплея
@@ -56,21 +53,14 @@ void updateDisplay() {
 }
 
 void setup() {
-  // Настройка пинов декодера строк
-  fastPinMode(ROW_DECODER_BIT0, OUTPUT);
-  fastPinMode(ROW_DECODER_BIT1, OUTPUT);
-  fastPinMode(ROW_DECODER_BIT2, OUTPUT);
-  fastPinMode(ROW_DECODER_EN1, OUTPUT);
-  fastDigitalWrite(ROW_DECODER_EN1, HIGH); // Изначально выключено
-  fastPinMode(ROW_DECODER_EN2, OUTPUT);
-  fastDigitalWrite(ROW_DECODER_EN2, HIGH); // Изначально выключено
-  fastPinMode(ROW_DECODER_EN3, OUTPUT);
-  fastDigitalWrite(ROW_DECODER_EN3, HIGH); // Изначально выключено
-
-  // Настройка пинов столбцов
-  for (auto pin : colPins) {
+  // Настройка пинов
+  for (auto pin : dcPins) {
     fastPinMode(pin, OUTPUT);
     fastDigitalWrite(pin, LOW);
+  }
+  for (auto pin : ctlPins) {
+    fastPinMode(pin, OUTPUT);
+    fastDigitalWrite(pin, HIGH);
   }
 
   // Настройка таймера для динамической индикации
@@ -83,9 +73,9 @@ void setup() {
 
 void updateDisplayContent()
 {
-  static uint8_t fill = 0;
-  memset(displayBuffer, (fill++ & 0x0F) ? 0xFF : 0, sizeof(displayBuffer));
-  fill++;
+  static uint16_t fill = 0x5555;
+  for(int i = 21; i >= 0; displayBuffer[i--] = (i & 1) ? fill : ~fill);
+  fill = ~fill;
 }
 
 void loop() {
