@@ -1,9 +1,9 @@
 #include <Arduino.h>
-#include <fastIO.h>
-#include <TimerOne.h> 
+#include <GyverIO.h>
+#include <STM32TimerInterrupt.h>
 
 // Конфигурация строк
-const uint16_t dcPins[5] = {A0, A1, A2, A3, A4};
+const uint16_t dcPins[5] = {PA9, PB14, PB13, PB8, PB5};
 
 enum pins {
   Start,
@@ -13,33 +13,33 @@ enum pins {
   cnt
 };
 
-const uint16_t ctlPins[pins::cnt] = {2, 3, 4, 5};
+const uint16_t ctlPins[pins::cnt] = {PB6, PC13, PB9, PB7};
 
 // Буфер дисплея (10x21)
 uint16_t displayBuffer[21] = {0};
 const uint16_t displayBufferCount = sizeof(displayBuffer) / sizeof(displayBuffer[0]);
 
-// Установка активной строки (0-19)
+// Установка активной строки (0-20)
 void setRow(byte row, uint16_t mask) {
   // Актуализация столбцов
   for (int i = 0; i < 10; i++, mask >>= 1)
   {
-    fastDigitalWrite(ctlPins[pins::Clk], HIGH);
-    fastDigitalWrite(ctlPins[pins::DO], mask & 1);
-    fastDigitalWrite(ctlPins[pins::Clk], LOW);
+    digitalWrite(ctlPins[pins::Clk], HIGH);
+    digitalWrite(ctlPins[pins::DO], mask & 1);
+    digitalWrite(ctlPins[pins::Clk], LOW);
   }
-  fastDigitalWrite(ctlPins[pins::Clk], HIGH);
-  fastDigitalWrite(ctlPins[pins::Start], HIGH);
-  fastDigitalWrite(ctlPins[pins::Strn], HIGH);
+  digitalWrite(ctlPins[pins::Clk], HIGH);
+  digitalWrite(ctlPins[pins::Start], HIGH);
+  digitalWrite(ctlPins[pins::Strn], HIGH);
   // Декодер строки
   for (auto pin : dcPins)
   {
-    fastDigitalWrite(pin, row & 1);
+    digitalWrite(pin, row & 1);
     row >>= 1;
   }
-  fastDigitalWrite(ctlPins[pins::Strn], LOW);
-  fastDigitalWrite(ctlPins[pins::Start], LOW);
-  fastDigitalWrite(ctlPins[pins::Strn], HIGH);
+  digitalWrite(ctlPins[pins::Strn], LOW);
+  digitalWrite(ctlPins[pins::Start], LOW);
+  digitalWrite(ctlPins[pins::Strn], HIGH);
 }
 
 // Прерывание для обновления дисплея
@@ -52,20 +52,21 @@ void updateDisplay() {
   }
 }
 
+STM32Timer ITimer(TIM1);
+
 void setup() {
   // Настройка пинов
   for (auto pin : dcPins) {
-    fastPinMode(pin, OUTPUT);
-    fastDigitalWrite(pin, LOW);
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW);
   }
   for (auto pin : ctlPins) {
-    fastPinMode(pin, OUTPUT);
-    fastDigitalWrite(pin, HIGH);
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, HIGH);
   }
 
   // Настройка таймера для динамической индикации
-  Timer1.initialize(1000); // 1000Hz (1000 мкс)
-  Timer1.attachInterrupt(updateDisplay);
+  ITimer.attachInterruptInterval(1000, updateDisplay);
 
   Serial.begin(9600);
   Serial.println("init complete");
@@ -76,6 +77,7 @@ void updateDisplayContent()
   static uint16_t fill = 0x5555;
   for(int i = 21; i >= 0; displayBuffer[i--] = (i & 1) ? fill : ~fill);
   fill = ~fill;
+//  memset(displayBuffer, 0xFF, sizeof(displayBuffer));
 }
 
 void loop() {
