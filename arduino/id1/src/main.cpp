@@ -2,8 +2,12 @@
 #include <GyverIO.h>
 #include <STM32TimerInterrupt.h>
 
+const uint32_t SCAN_TICK = 1;
+const uint32_t FRAME_TICK = 1000;
+const uint32_t KEY_TICK = 25;
+
 // Конфигурация строк
-const uint16_t dcPins[5] = {PA9, PB14, PB13, PB8, PB5};
+const uint16_t dcPins[5] = {PB5, PB6, PB7, PB8, PB9};
 
 enum pins {
   Start,
@@ -13,11 +17,19 @@ enum pins {
   cnt
 };
 
-const uint16_t ctlPins[pins::cnt] = {PB6, PC13, PB9, PB7};
+const uint16_t ctlPins[pins::cnt] = {PB15, PB14, PB12, PB13};
+
+const uint16_t ledPin = PC13;
+const uint16_t keyPin = PA0;
 
 // Буфер дисплея (10x21)
 uint16_t displayBuffer[21] = {0};
 const uint16_t displayBufferCount = sizeof(displayBuffer) / sizeof(displayBuffer[0]);
+
+STM32Timer ITimerDisplay(TIM1);
+STM32Timer ITimerLed(TIM2);
+
+bool traceMode = false;
 
 // Установка активной строки (0-20)
 void setRow(byte row, uint16_t mask) {
@@ -50,9 +62,44 @@ void updateDisplay() {
   {
     currentRow = 0;
   }
+
+  digitalWrite(ledPin, currentRow & 1);
 }
 
-STM32Timer ITimer(TIM1);
+// Прерывание для обработки светодиода и кнопки
+void updateLed() {
+  static uint16_t key = 0;
+  static uint8_t led = 0;
+
+  if (!digitalRead(keyPin))
+  {
+    if (key < 255) key++;
+    if (key == 50)
+    {
+      // long push
+      if (traceMode){
+        ITimerDisplay.enableTimer();
+
+      }
+      else{
+        ITimerDisplay.disableTimer();
+      }
+      traceMode = !traceMode; 
+    }
+  }
+  else
+  {
+    if (key > 2 && key < 50)
+    {
+      // push up
+      if (traceMode)
+      {
+        updateDisplay();
+      }
+    }
+    key = 0;
+  }
+}
 
 void setup() {
   // Настройка пинов
@@ -65,23 +112,34 @@ void setup() {
     digitalWrite(pin, HIGH);
   }
 
-  // Настройка таймера для динамической индикации
-  ITimer.attachInterruptInterval(1000, updateDisplay);
+  pinMode(ledPin, OUTPUT);
+  pinMode(keyPin, INPUT_PULLUP);
 
-  Serial.begin(9600);
-  Serial.println("init complete");
+  // Настройка таймеров
+  ITimerDisplay.attachInterruptInterval(SCAN_TICK * 1000, updateDisplay);
+  ITimerLed.attachInterruptInterval(KEY_TICK * 1000, updateLed);
 }
 
 void updateDisplayContent()
 {
-  static uint16_t fill = 0x5555;
-  for(int i = 21; i >= 0; displayBuffer[i--] = (i & 1) ? fill : ~fill);
-  fill = ~fill;
-//  memset(displayBuffer, 0xFF, sizeof(displayBuffer));
+  static auto step = 0;
+  switch (step){
+    case 0:
+    case 1:
+      static uint16_t fill = 0x5555;
+      for(int i = 21; i >= 0; displayBuffer[i--] = (i & 1) ? fill : ~fill);
+      fill = ~fill;
+      step++;
+      break;
+    default:
+      memset(displayBuffer, 0xFF, sizeof(displayBuffer));
+      step = 0;
+      break;
+  }
 }
 
 void loop() {
   // Обновляем содержимое буфера
-  updateDisplayContent();
-  delay(1000);
+  if (!traceMode) updateDisplayContent();
+  delay(FRAME_TICK);
 }
