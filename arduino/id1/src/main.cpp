@@ -2,8 +2,11 @@
 #include <GyverIO.h>
 #include <STM32TimerInterrupt.h>
 
+// Интервал сканирования матрицы, мс
 const uint32_t SCAN_TICK = 1;
+// Интервал изменения кадра, мс
 const uint32_t FRAME_TICK = 1000;
+// Интервал опроса клавиатуры, мс
 const uint32_t KEY_TICK = 25;
 
 // Конфигурация строк
