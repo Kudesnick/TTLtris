@@ -5,35 +5,6 @@
 
 using namespace std;
 
-VOID k155ru5::initialize(ICOMPONENT* cpt)
-{
-}
-
-ISPICEMODEL* k155ru5::getspicemodel(CHAR* primitive)
-{
-	return NULL;
-}
-
-IDSIMMODEL* k155ru5::getdsimmodel(CHAR* primitive)
-{
-	return this;
-}
-
-VOID k155ru5::plot(ACTIVESTATE state)
-{
-}
-
-VOID k155ru5::animate(INT element, ACTIVEDATA* newstate)
-{
-}
-
-BOOL k155ru5::actuate(WORD key, INT x, INT y, DWORD flags)
-{
-	return FALSE;
-}
-
-//----------------
-
 INT k155ru5::isdigital (CHAR *pinname)
 {
 	return TRUE; // Indicates this is a digital model
