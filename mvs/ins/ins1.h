@@ -43,4 +43,5 @@ public:
 	virtual BOOL actuate(WORD key, INT x, INT y, DWORD flags) override;
 private:
 	ICOMPONENT* cpt = NULL;
+	void drawpixel(size_t x, size_t y, bool enable);
 };

@@ -140,6 +140,7 @@ VOID ins1Dsim::callback(ABSTIME time, EVENTID eventid)
 VOID ins1Active::initialize(ICOMPONENT* cpt)
 {
 	this->cpt = cpt;
+	this->cpt->setpencolour(BLACK);
 	this->cpt->setpenwidth(0);
 }
 
@@ -155,7 +156,14 @@ IDSIMMODEL* ins1Active::getdsimmodel(CHAR* primitive)
 
 VOID ins1Active::plot(ACTIVESTATE state)
 {
-	cpt->drawcircle(GRID, -GRID, GRID / 2);
+	BOX bx = { 0, 0, GRID * (buff[0].size() + 1), -GRID * (buff.size() + 1) };
+	cpt->setbrushcolour(BLACK);
+	POINT pts[] = { {bx.left, bx.top}, {bx.right, bx.top}, {bx.right, bx.bottom}, {bx.left, bx.bottom} };
+	cpt->drawpolygon(pts, 4);
+	
+	for (size_t a = 0; a < buff.size(); a++)
+		for (size_t k = 0; k < buff[a].size(); k++)
+			drawpixel(k, a, ishigh(buff[a][k]));
 }
 
 VOID ins1Active::animate(INT element, ACTIVEDATA* newstate)
@@ -167,8 +175,7 @@ VOID ins1Active::animate(INT element, ACTIVEDATA* newstate)
 			if (buff[a][k] != matrix[a][k])
 			{
 				buff[a][k] = matrix[a][k];
-				cpt->setbrushcolour(ishigh(buff[a][k]) ? YELLOW : BLACK);
-				cpt->drawcircle(GRID * (k + 1), -GRID * (buff.size() - a), GRID / 2);
+				drawpixel(k, a, ishigh(buff[a][k]));
 			}
 		}
 	}
@@ -180,3 +187,9 @@ BOOL ins1Active::actuate(WORD key, INT x, INT y, DWORD flags)
 }
 
 // Private functions
+
+void ins1Active::drawpixel(size_t x, size_t y, bool enable)
+{
+	cpt->setbrushcolour(enable ? MAKECOLOUR(0xFF, 0x6F, 0x00) : BLACK);
+	cpt->drawcircle(GRID * (x + 1), -GRID * (buff.size() - y), GRID / 2 - 5);
+}
