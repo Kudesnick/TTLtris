@@ -7,8 +7,12 @@
 using namespace std;
 
 #define GRID (100)
+#define TRIGMIN (500ULL * 1000) // «адержка активации пикселей после активации анода в пикосекундах
 
 // IDSIMMODEL
+
+
+std::vector<std::vector<STATE>> matrix, buff;
 
 INT ins1Dsim::isdigital(CHAR* pinname)
 {
@@ -37,7 +41,7 @@ VOID ins1Dsim::setup(IINSTANCE* instance, IDSIMCKT* dsimckt)
 		pin = inst->getdsimpin(name, false);
 		if (pin != NULL)
 		{
-			pin_anode.push_back(pin);
+			pinAnode.push_back(pin);
 		}
 		else
 		{
@@ -60,7 +64,7 @@ VOID ins1Dsim::setup(IINSTANCE* instance, IDSIMCKT* dsimckt)
 		pin = inst->getdsimpin(name, false);
 		if (pin != NULL)
 		{
-			pin_cathode.push_back(pin);
+			pinCathode.push_back(pin);
 		}
 		else
 		{
@@ -68,9 +72,27 @@ VOID ins1Dsim::setup(IINSTANCE* instance, IDSIMCKT* dsimckt)
 		}
 	}
 
+	matrix.resize(pinAnode.size());
+	for (auto& row : matrix)
+	{
+		row.resize(pinCathode.size());
+		row.shrink_to_fit();
+		for (auto& pixel : row) pixel = UNDEFINED;
+	}
+	matrix.shrink_to_fit();
+
+	buff.resize(pinAnode.size());
+	for (auto& row : buff)
+	{
+		row.resize(pinCathode.size());
+		row.shrink_to_fit();
+		for (auto& pixel : row) pixel = UNDEFINED;
+	}
+	buff.shrink_to_fit();
+
 	debug = inst->getboolval("debug", false);
 
-	inst->log("matrix created with %d anodes and %d cathodes", pin_anode.size(), pin_cathode.size());
+	inst->log("matrix created with %d anodes and %d cathodes", pinAnode.size(), pinCathode.size());
 }
 
 VOID ins1Dsim::runctrl(RUNMODES mode)
@@ -88,10 +110,29 @@ BOOL ins1Dsim::indicate(REALTIME time, ACTIVEDATA* data)
 
 VOID ins1Dsim::simulate(ABSTIME time, DSIMMODES mode)
 {
+	for (size_t i = 0; i < pinAnode.size(); i++)
+	{
+		auto& pin = pinAnode[i];
+		if (pin.pin->istate() != pin.lastState)
+		{
+			pin.lastState = pin.pin->istate();
+			if (islow(pin.lastState))
+			{
+				ckt->setcallback(TRIGMIN, this, i);
+			}
+		}
+	}
 }
 
 VOID ins1Dsim::callback(ABSTIME time, EVENTID eventid)
 {
+	if (eventid < matrix.size())
+	{
+		for (int i = pinCathode.size() - 1; i >= 0; i--)
+		{
+			matrix[eventid][i] = pinCathode[i]->istate();
+		}
+	}
 }
 
 // IACTIVEMODEL
@@ -99,6 +140,7 @@ VOID ins1Dsim::callback(ABSTIME time, EVENTID eventid)
 VOID ins1Active::initialize(ICOMPONENT* cpt)
 {
 	this->cpt = cpt;
+	this->cpt->setpenwidth(0);
 }
 
 ISPICEMODEL* ins1Active::getspicemodel(CHAR* primitive)
@@ -118,6 +160,18 @@ VOID ins1Active::plot(ACTIVESTATE state)
 
 VOID ins1Active::animate(INT element, ACTIVEDATA* newstate)
 {
+	for (size_t a = 0; a < buff.size(); a++)
+	{
+		for (size_t k = 0; k < buff[a].size(); k++)
+		{
+			if (buff[a][k] != matrix[a][k])
+			{
+				buff[a][k] = matrix[a][k];
+				cpt->setbrushcolour(ishigh(buff[a][k]) ? YELLOW : BLACK);
+				cpt->drawcircle(GRID * (k + 1), -GRID * (buff.size() - a), GRID / 2);
+			}
+		}
+	}
 }
 
 BOOL ins1Active::actuate(WORD key, INT x, INT y, DWORD flags)

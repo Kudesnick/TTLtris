@@ -6,6 +6,8 @@
 
 #define InfoLog(__s__) inst->log(__s__);
 
+typedef uint16_t row_t;
+
 class ins1Dsim : public IDSIMMODEL
 {
 public:
@@ -19,8 +21,14 @@ public:
 private:
 	IINSTANCE* inst = NULL;
 	IDSIMCKT* ckt = NULL;
-	std::vector<IDSIMPIN*> pin_anode, pin_cathode;
-	std::vector<std::vector<bool>> pixel_matrix;
+	struct anode {
+		IDSIMPIN* pin;
+		REALTIME activeTime;
+		STATE lastState;
+		anode(IDSIMPIN* _pin) : pin(_pin), activeTime(0), lastState(UNDEFINED) {};
+	};
+	std::vector<anode> pinAnode;
+	std::vector<IDSIMPIN*> pinCathode;
 	BOOL debug;
 };
 
