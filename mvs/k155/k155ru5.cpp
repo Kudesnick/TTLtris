@@ -52,7 +52,7 @@ BOOL k155ru5::indicate (REALTIME time, ACTIVEDATA *data)
 
 VOID k155ru5::simulate(ABSTIME time, DSIMMODES mode)
 {
-	STATE result = SHI;
+	STATE result = FLT;
 
 	if (true
 		&& islow(pin_CS1->istate())
@@ -70,11 +70,10 @@ VOID k155ru5::simulate(ABSTIME time, DSIMMODES mode)
 				inst->log("0x%04X = 0x%02X", addr, val);
 			}
 		}
-		else
-			result = (memory[get_addr()] & 1) ? SHI : SLO;
+		else if (!memory[get_addr()] & 1) result = SLO;
 	}
 
-	pin_DO->setstate(time, 1, result);
+	pin_DO->setstate(time, 50000, result);
 }
 
 VOID k155ru5::callback (ABSTIME time, EVENTID eventid)
