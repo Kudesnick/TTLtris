@@ -133,7 +133,7 @@ for k, v in rect.items():
      for y in range(int(hexsz / strsz)):
           for x in range(strsz):
               ch = rectangle[hexsz - ((y + 1)  * strsz) + x]
-              d = 0 if ch == '0' else 0xFF
+              d = 0xFF if ch == '0' else 0
               dots.append(d)
 
      hex = IntelHex()
