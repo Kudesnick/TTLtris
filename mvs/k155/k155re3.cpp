@@ -78,7 +78,7 @@ VOID k155re3::set_data(ABSTIME time, UINT8 data)
 {
 	for (auto &pin : pin_D)
 	{
-		pin->setstate(time, 1, (data & 1) ? SLO : SHI); // Negative output
+		pin->setstate(time, 1, (data & 1) ? FLT : SLO);
 		data >>= 1;
 	}
 }

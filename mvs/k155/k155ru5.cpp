@@ -60,17 +60,20 @@ VOID k155ru5::simulate(ABSTIME time, DSIMMODES mode)
 		&& ishigh(pin_CS3->istate())
 		)
 	{
+		int addr = get_addr();
+		int byte = addr >> 3;
+		int mask = 1 << (addr & 0x7);
 		if (islow(pin_WE->istate()))
 		{
-			UINT8 addr = get_addr();
-			UINT8 val = (memory[addr] & 0xFE) | (ishigh(pin_DI->istate()) ? 1 : 0);
-			memory[addr] = val;
+			if (ishigh(pin_DI->istate())) memory[byte] |= mask;
+			else memory[byte] &= ~mask;
+
 			if (debug)
 			{
-				inst->log("0x%04X = 0x%02X", addr, val);
+				inst->log("0x%04X = 0x%02X", byte, memory[byte]);
 			}
 		}
-		else if (!memory[get_addr()] & 1) result = SLO;
+		else if ((memory[byte] & mask) == 0) result = SLO;
 	}
 
 	pin_DO->setstate(time, 50000, result);
