@@ -8,8 +8,8 @@ from intelhex import IntelHex
 # v
 # Y
 
-I = ['####',
-     '0000']
+I = ['0000',
+     '####']
 
 J = ['###0',
      '00#0']
@@ -29,47 +29,40 @@ T = ['0#00',
 Z = ['##00',
      '0##0']
 
-x_coord = []
-y_coord = []
+x_coord = bytearray()
+y_coord = bytearray()
 
 for i in [I, J, L, O, S, T, Z, I]:
     for x in range(4):
         for y in range(2):
             if i[y][x] == '#':
-                # Инвертируем, т.к. выход ПЗУ = инверсный
-                x_coord.append(x ^ 3)
-                y_coord.append(y ^ 3)
+                x_coord.append(x)
+                y_coord.append(y)
 
-# print(coord)
+print(x_coord)
+print(y_coord)
 
 '''
-MSB             LSB
-0000 0000 0000 0000
-                 \--x0
-               \----y0
-            \-------x1
-          \---------y1
-       \------------x2
-     \--------------y2
-  \-----------------x3
-\-------------------y3
+MSB   LSB
+0000 0000
+| |  | \-- x
+| |  \---- y
+| \------- ~x-1
+\--------- ~y-1
 '''
-
-offset = 32
 
 hex = IntelHex()
-for i in range(int(len(x_coord) / 4)):
-     x = x_coord[i*4:i*4+4]
-     y = y_coord[i*4:i*4+4]
-     hex.puts(i*2  , bytes([x[0] + (y[0] << 2) + (x[1] << 4) + (y[1] << 6)]))
-     hex.puts(i*2+1, bytes([x[2] + (y[2] << 2) + (x[3] << 4) + (y[3] << 6)]))
-hex.write_hex_file('../proteus/figure.hex', byte_count = 16)
+for i in range(len(x_coord)):
+    w = bytearray(4)
+    w[0] = x_coord[i]
+    w[1] = (y_coord[i]) << 2
+    w[2] = ((~x_coord[i] - 1) & 0x3) << 4
+    w[3] = ((~y_coord[i]) & 0x3) << 6
+    wb = sum(w)
+    hex.puts(i, bytes([wb]))
+hex.write_hex_file('../proteus/figure.hex', byte_count = 8)
 
 print(f'Writed {hex.maxaddr() + 1} bytes to figure.hex.')
-
-for i in range(8):
-    tmp = hex[i*2] + (hex[i*2+1] << 8)
-    print(f'{tmp:0>16b}')
 
 # Y
 # ^
@@ -125,19 +118,22 @@ rect['empty'] = [
      ]
 
 for k, v in rect.items():
-
-     hexsz = 512
-     strsz = 16
-     rectangle = ''.join([''.join(i.split()).ljust(strsz, '0') for i in v]).rjust(hexsz, '0')
-     dots = bytearray([])
-     for y in range(int(hexsz / strsz)):
-          for x in range(strsz):
-              ch = rectangle[hexsz - ((y + 1)  * strsz) + x]
-              d = 0xFF if ch == '0' else 0
-              dots.append(d)
+     dots = bytearray()
+     v.reverse()
+     for i in v:
+          w = 0xFFFF
+          i = ''.join(i.split())
+          for j in range(len(i)):
+              w <<= 1
+              w += 1 if i[j] == '0' else 0 # inverse
+          wb = bytearray(2)
+          wb[0] = w & 0xFF
+          wb[1] = (w >> 8) & 0xFF
+          dots.extend(wb)
+     dots.extend([0xFF] * (64 - len(dots)))
 
      hex = IntelHex()
      hex.frombytes(dots)
-     hex.write_hex_file(f'../proteus/k155ru5_{k}.hex', byte_count = strsz)
+     hex.write_hex_file(f'../proteus/k155ru5_{k}.hex', byte_count = 8)
 
      print(f'Writed {hex.maxaddr() + 1} bytes to k155ru5_{k}.hex.')
