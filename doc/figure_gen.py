@@ -122,7 +122,7 @@ for k, v in rect.items():
      v.reverse()
      for i in v:
           w = 0xFFFF
-          i = ''.join(i.split())
+          i = ''.join(i.split())[::-1]
           for j in range(len(i)):
               w <<= 1
               w += 1 if i[j] == '0' else 0 # inverse

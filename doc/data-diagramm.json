@@ -1,0 +1,9 @@
+{signal: [
+  {name: 'freq1'   , wave: '01010101010101010101010101010101'},
+  {name: 'freq2'   , wave: '0101010101010101', period: 2},
+  {name: 'freq4'   , wave: '01010101', period: 4},
+  {name: 'clock0'  , wave: '0101', period: 8},
+  {name: 'clock1'  , wave: '0101', period: 8, phase: -1},
+  {name: 'ROM addr', wave: '34', data: ['DO'], phase: -0.2},
+  {name: 'DI'      , wave: '33', period: 16, phase: -1.2},
+]}
